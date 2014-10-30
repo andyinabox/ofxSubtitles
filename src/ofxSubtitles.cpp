@@ -15,6 +15,28 @@ ofxSubtitles::ofxSubtitles(){
 	color.g = 250;
 	color.b = 0;
 	color.a = 255;
+    
+    bFontLinked = true;
+    //curSub = -1;
+    //nextTime = 0;
+    //curTxt = "";
+}
+
+ofxSubtitles::~ofxSubtitles(){
+    //if(bFontLinked){
+    //    delete font;
+    //}
+}
+
+void ofxSubtitles::loadfont(const string &fontPath){
+    bFontLinked = false;
+    font = new ofTrueTypeFont();
+    font->loadFont(fontPath,13,true,true,true);
+}
+
+void ofxSubtitles::linkFont(ofTrueTypeFont *_font){
+    bFontLinked = true;
+    font = _font;
 }
 
 void ofxSubtitles::load(const string& path){
@@ -32,12 +54,16 @@ void ofxSubtitles::load(const string& path){
 		
 		fs.close();
 		
-		int counter = 1;
+        int counter = 1;
+        
+        
 		// Now it populate the subtitles vector
+        
 		for (int i = 0; i < file.size(); i++) {
-			// If the line start with a number that match the counter. Means it´s reading the start of a new subtitle line
-			if (ofToInt(file[i].c_str()) == counter){
-				// Look for IN & OUT TIME in seconds
+            // If the line start with a number that match the counter. Means it´s reading the start of a new subtitle line
+            
+            if(ofToInt(file[i].c_str()) == counter){
+                // Look for IN & OUT TIME in seconds
 				vector <string> inTimeRAW = ofSplitString(file[i+1], ":");	
 				vector <string> outTimeRAW = ofSplitString(file[i+3], ":");
 				
@@ -59,7 +85,7 @@ void ofxSubtitles::load(const string& path){
 				string text = "";
 				i += 4;
 				while ( (file[i] != ofToString(counter+1)) && (i < file.size()-1 ) ){
-					text = text + file[i] + " ";
+				    text = text + file[i] + " ";
 					i++;
 				}
 				
@@ -178,6 +204,7 @@ void ofxSubtitles::add(float _in, float _out, string _text){
 			} else cout << "ERROR 7: no start address: inFill=" << inFill << " inClean=" << inClean << endl; 
 		}
 	}
+    
 }
 
 bool ofxSubtitles::isStringAt(string search, float sec){
@@ -241,15 +268,15 @@ void ofxSubtitles::draw(int x, int y, int w, int h, float sec){
 	
 	ofSetColor(color.r,color.g,color.b,color.a);
 	
-	if (font.stringWidth(text) < w*0.8 ){
-		font.drawString(text,x + w*0.5 - font.stringWidth(text)*0.5, y + h - font.stringHeight(text));
+	if (font->stringWidth(text) < w*0.8 ){
+		font->drawString(text,x + w*0.5 - font->stringWidth(text)*0.5, y + h - font->stringHeight(text));
 	} else {
 		vector <string> words = ofSplitString(text, " ");
 		vector <string> lines;
 		string tempText = "";
 		
 		for (int i = 0; i < words.size(); i++){
-			if (font.stringWidth(tempText + " " + words[i]) < w*0.8 ) tempText = tempText + " " + words[i];
+			if (font->stringWidth(tempText + " " + words[i]) < w*0.8 ) tempText = tempText + " " + words[i];
 			else {
 				lines.push_back(tempText);
 				tempText = words[i];
@@ -258,7 +285,56 @@ void ofxSubtitles::draw(int x, int y, int w, int h, float sec){
 		lines.push_back(tempText);
 		
 		for (int i = 0; i < lines.size(); i++)
-			font.drawString(lines[i], x + w*0.5 - font.stringWidth(lines[i])*0.5, y + h - (font.stringHeight(lines[i])*lines.size()) + font.stringHeight(lines[i])*i );
+			font->drawString(lines[i], x + w*0.5 - font->stringWidth(lines[i])*0.5, y + h - (font->stringHeight(lines[i])*lines.size()) + font->stringHeight(lines[i])*i );
 	}
 }
 
+//auto
+void ofxSubtitles::initAuto(){
+    if(subtitles.size()>0){
+        autoSub.curSub = 0;
+        setWaiting();
+    }
+}
+
+
+void ofxSubtitles::setWaiting(){
+    autoSub.curTxt = "";
+    autoSub.isNextNext = false;
+    autoSub.nextTime = subtitles[autoSub.curSub].inSec;
+}
+
+void ofxSubtitles::setCurText(){
+    autoSub.curTxt = subtitles[autoSub.curSub].text;
+    autoSub.isNextNext = true;
+    autoSub.nextTime = subtitles[autoSub.curSub].outSec;
+}
+
+void ofxSubtitles::setTime(float now){
+    if(now>=autoSub.nextTime){
+        if(autoSub.isNextNext){
+            if(autoSub.curSub<(subtitles.size()-1)){
+                autoSub.curSub++;
+                setWaiting();
+            }
+        }else{
+            if(autoSub.curSub>=0 && autoSub.curSub<subtitles.size()){
+                setCurText();
+            }
+        }
+    }
+}
+
+string ofxSubtitles::getAutoText(){
+    return autoSub.curTxt;
+}
+
+//---
+
+float ofxSubtitles::getTotSecs(){
+    float tot = 0;
+    if(subtitles.size()>0){
+        tot = subtitles[subtitles.size()-1].outSec;
+    }
+    return tot;
+}

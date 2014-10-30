@@ -31,6 +31,7 @@ public:
 	vector<subTitle>	subtitles;
 
 	ofxSubtitles();
+    ~ofxSubtitles();
 	
 	void		load(const string& filePath);
 	void		save(const string& filePath);
@@ -47,9 +48,11 @@ public:
 	
 	void		replace(string searchString, string replaceFor, float sec);
 	
-	ofTrueTypeFont	font;
-	void		loadfont(const string& fontPath){font.loadFont(fontPath,13,true,true,true);};
-	
+	ofTrueTypeFont	* font;
+	void		loadfont(const string& fontPath);//{font.loadFont(fontPath,13,true,true,true);};
+    void        linkFont(ofTrueTypeFont * _font);
+	bool        bFontLinked;
+    
 	int			screenWidth, screenHeight;
 	void		setScreen(int width, int height){screenWidth = width; screenHeight = height; };
 	
@@ -60,5 +63,26 @@ public:
 	void		draw(float inSec){draw(0,0,screenWidth,screenHeight,inSec);};
 	void		draw(int x, int y, float inSec){draw(x,y,screenWidth,screenHeight,inSec);};
 	void		draw(int x, int y, int w, int h, float inSec);
+    
+    float getTotSecs();
+    
+    //auto
+    void initAuto();
+    void setWaiting();
+    void setCurText();
+    
+    void setTime(float now);
+    string getAutoText();
+    
+    struct AutoSubtitle{
+        string curTxt = "";
+        float nextTime = 0;
+        int curSub = -1;
+        bool isNextNext = true;
+    } autoSub;
+    
+    //string curTxt;
+    //float nextTime;
+    //int curSub;
 };
 #endif 
