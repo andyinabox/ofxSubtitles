@@ -8,6 +8,12 @@
  */
 #include "ofxSubtitles.h"
 
+//subTitle
+string subTitle::getText(){
+    return text;
+}
+//---
+
 ofxSubtitles::ofxSubtitles(){
 	screenWidth = ofGetWidth();
 	screenHeight = ofGetHeight();
@@ -305,7 +311,7 @@ void ofxSubtitles::setWaiting(){
 }
 
 void ofxSubtitles::setCurText(){
-    autoSub.curTxt = subtitles[autoSub.curSub].text;
+    autoSub.curTxt = subtitles[autoSub.curSub].getText();
     autoSub.isNextNext = true;
     autoSub.nextTime = subtitles[autoSub.curSub].outSec;
 }
@@ -338,3 +344,66 @@ float ofxSubtitles::getTotSecs(){
     }
     return tot;
 }
+
+//tags
+void ofxSubtitles::applyTags(vector<ofxSubtitles::StaticTag> &tags, float fromSec, float toSec){
+    if(toSec<0 || toSec<fromSec){
+        toSec = getTotSecs();
+    }
+    
+    for(int i=0; i<subtitles.size();i++){
+        if(subtitles[i].inSec>=fromSec){
+            if(subtitles[i].outSec<=toSec){
+                for(int j=0;j<tags.size();j++){
+                    applyTag(tags[j], i);
+                }
+            }else{
+                i=subtitles.size()+2;
+            }
+        }
+    }
+}
+
+bool ofxSubtitles::applyTag(ofxSubtitles::StaticTag & tag, int subIdx){
+    bool bFound = false;
+    if(subtitles.size()>subIdx){
+        string orig = subtitles[subIdx].text;
+        bFound = applyTag(tag, subtitles[subIdx].text);
+        if(bFound){
+            tag.idx.push_back(subIdx);
+            tag.originals.push_back(orig);
+        }
+    }
+    return bFound;
+}
+
+bool ofxSubtitles::applyTag(ofxSubtitles::StaticTag & tag, string & _txt){
+    bool bFound = false;
+    string ctag= "<"+tag.tagName+">";
+    size_t pos = _txt.find(ctag, 0);
+    while(pos != string::npos){
+        bFound = true;
+        _txt.erase(pos, ctag.size());
+        _txt.insert(pos, tag.changeTo);
+        pos = _txt.find(ctag, pos+tag.changeTo.size());
+    }
+    return bFound;
+}
+
+void ofxSubtitles::applyTagFromIdx(ofxSubtitles::StaticTag &tag){
+    if(tag.idx.size()>0 && tag.idx.size()==tag.originals.size()){
+        for(int i=0;i<tag.idx.size();i++){
+            if(subtitles.size()>tag.idx[i]){
+                subtitles[tag.idx[i]].text = tag.originals[i];
+                applyTag(tag, subtitles[tag.idx[i]].text);
+            }
+        }
+    }
+}
+
+void ofxSubtitles::applyTagsFromIdx(vector<ofxSubtitles::StaticTag> &tags){
+    for(int i=0; i<tags.size();i++){
+        applyTagFromIdx(tags[i]);
+    }
+}
+//---

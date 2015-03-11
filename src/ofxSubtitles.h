@@ -20,14 +20,29 @@
 
 //using namespace std; 
 
-typedef struct {
+/*typedef struct {
 	float	inSec;
 	float	outSec;
 	string	text;
-}subTitle;
+}subTitle;*/
+
+class subTitle{
+public:
+    subTitle(){
+        inSec=0;
+        outSec=0;
+        text="";
+    }
+    string getText();
+    
+    float inSec;
+    float outSec;
+    string text;
+};
 
 class ofxSubtitles{
 public:
+    
 	vector<subTitle>	subtitles;
 
 	ofxSubtitles();
@@ -41,7 +56,7 @@ public:
 	
 	int			getHowMany(float _fromSec, float _untilSec);
 	int			getFirstSubN(float _fromSec );
-	string		getLineAt(float _inSec){subTitle s = getSubTitleAt(_inSec); return s.text; };
+	string		getLineAt(float _inSec){subTitle s = getSubTitleAt(_inSec); return s.getText(); };
 	subTitle	getSubTitleAt(float _inSec);
 	
 	bool		isStringAt(string search, float sec);
@@ -80,9 +95,30 @@ public:
         int curSub = -1;
         bool isNextNext = true;
     } autoSub;
+    //---
     
-    //string curTxt;
-    //float nextTime;
-    //int curSub;
+    //tags
+    struct StaticTag{
+        StaticTag(string _tag, string _string){
+            make(_tag,_string);
+        }
+        void make(string _tag, string _string){
+            idx.clear();
+            originals.clear();
+            tagName=_tag;
+            changeTo=_string;
+        }
+        string tagName = "tag";
+        string changeTo= "";
+        vector<string> originals;
+        vector<int> idx;
+    };
+    
+    void applyTags(vector<StaticTag> & tags, float fromSec=0, float toSec=-1);
+    bool applyTag(StaticTag & tag, int subIdx);
+    bool applyTag(StaticTag & tag, string & _txt);
+    void applyTagFromIdx(StaticTag & tag);
+    void applyTagsFromIdx(vector<StaticTag> & tags);
+    //---
 };
 #endif 
