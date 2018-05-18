@@ -55,9 +55,13 @@ void ofxSubtitles::load(const string& path){
 		file.clear();
 		
 		// Load the data to a temporal vector call ´file´
-		while(!(fs >> line).fail())
-			file.push_back(line);
-		
+//		while(!(fs >> line).fail())
+//            cout << line << "\n";
+//			file.push_back(line);
+//
+        while(std::getline(fs, line)) {
+            file.push_back(line);
+        }
 		fs.close();
 		
         int counter = 1;
@@ -70,11 +74,13 @@ void ofxSubtitles::load(const string& path){
             
             if(ofToInt(file[i].c_str()) == counter){
                 // Look for IN & OUT TIME in seconds
-				vector <string> inTimeRAW = ofSplitString(file[i+1], ":");	
-				vector <string> outTimeRAW = ofSplitString(file[i+3], ":");
+                vector <string> times = ofSplitString(file[i+1], " --> ");
+                
+				vector <string> inTimeRAW = ofSplitString(times[0], ":");
+				vector <string> outTimeRAW = ofSplitString(times[1], ":");
 				
-				vector <string> inPresTimeRAW = ofSplitString(file[i+1], ",");
-				vector <string> outPresTimeRAW = ofSplitString(file[i+3], ",");
+				vector <string> inPresTimeRAW = ofSplitString(times[0], ",");
+				vector <string> outPresTimeRAW = ofSplitString(times[1], ",");
 				
 				// Extract the seconds
 				float inSeg = ofToFloat(inTimeRAW[2].c_str()) + ( ofToFloat(inPresTimeRAW[1].c_str()) )*0.001;
@@ -89,14 +95,16 @@ void ofxSubtitles::load(const string& path){
 				
 				// Extract the TEXT
 				string text = "";
-				i += 4;
+				i += 2;
 				while ( (file[i] != ofToString(counter+1)) && (i < file.size()-1 ) ){
-				    text = text + file[i] + " ";
+				    text = text + file[i] + "\n";
 					i++;
 				}
 				
+                text = ofTrim(text);
+                
 				if ( text != "")
-					add(inSeg,outSeg,text);
+					add(inSeg,outSeg, text);
 				
 				counter++;
 				i--;
